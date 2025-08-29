@@ -41,29 +41,31 @@ body {
 
   --emerald-100: #d1fae5;
 
-  --yellow-200: #fef08a;
-  --yellow-100: #fef9c3;
+  /* Brazil flag inspired palette */
+  --yellow-200: #fbe768;
+  --yellow-100: #fff2a8;
 
-  --yellow-300: #fde047;
-  --yellow-400: #facc15;
-  --yellow-500: #eab308;
-  --yellow-600: #ca8a04;
-  --yellow-700: #a16207;
-  --yellow-800: #854d0e;
-  --yellow-950: #422006;
+  --yellow-300: #ffd93d;
+  --yellow-400: #ffc400;
+  --yellow-500: #f2c200;
+  --yellow-600: #d1a900;
+  --yellow-700: #a98600;
+  --yellow-800: #7d6400;
+  --yellow-950: #3a2f00;
 
-  --green-600: #16a34a;
-  --green-900: #14532d;
+  --green-600: #12a454;
+  --green-900: #0b4f2a;
 
-  --blue-900: #1e3a8a;
-  --sky-950: #082f49;
+  --blue-900: #0b3b91;
+  --sky-950: #062a63;
 
   color: var(--neutral-900);
 
   --border-color: var(--slate-400);
-  --uuid-color: var(--neutral-900);
+  --uuid-color: var(--blue-900);
 
-  background-color: var(--slate-300);
+  background-color: #0f7a3b; /* lighter green for better contrast */
+  color: #ffffff;
 }
 img,
 picture,

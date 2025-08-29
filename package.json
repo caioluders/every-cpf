@@ -8,6 +8,8 @@
     "dev": "parcel public/index.html",
     "prebuild": "rimraf .parcel-cache dist",
     "build": "parcel build public/index.html",
+    "predeploy": "npm run build -- --public-url ./",
+    "deploy": "gh-pages -d dist",
     "new-component": "new-component"
   },
   "keywords": [],
@@ -30,6 +32,7 @@
   },
   "browserslist": ">0.3%, defaults, supports es6-module",
   "devDependencies": {
+    "gh-pages": "^6.1.1",
     "buffer": "^6.0.3",
     "events": "^3.3.0",
     "stream-browserify": "^3.0.0",

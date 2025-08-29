@@ -49,7 +49,7 @@ function FavoritesWidget({ setShowFavorites, isShowingFavorites }) {
         $isShowingFavorites={isShowingFavorites}
       >
         <Star
-          fill="var(--fill-color)"
+          fill="var(--black-500)"
           style={{ height: "100%", aspectRatio: 1 }}
         />
       </FavoritesButton>

@@ -252,7 +252,7 @@ const UUID = styled.span`
 `;
 
 const Highlight = styled.span`
-  background-color: yellow;
+  background-color: var(--yellow-300);
 `;
 
 function Row({
@@ -265,7 +265,7 @@ function Row({
 }) {
   const indexString = index.toString();
   const length = indexString.length;
-  const padLength = 37;
+  const padLength = 18;
   const paddingLength = padLength - length;
   let padding;
   if (paddingLength < 0) {
@@ -279,10 +279,16 @@ function Row({
   const [justCopied, setJustCopied] = React.useState(0);
   const timeoutRef = React.useRef(null);
 
+  const formatCPF = React.useCallback((raw) => {
+    const digits = (raw || "").toString().replace(/\D/g, "").padStart(11, "0");
+    if (digits.length !== 11) return raw;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  }, []);
+
   const handleCopy = React.useCallback(async () => {
     clearTimeout(timeoutRef.current);
     await navigator.clipboard
-      .writeText(uuid)
+      .writeText(formatCPF(uuid))
       .catch((e) => {
         console.error("error copying to clipboard", e);
         setJustCopied(0);
@@ -293,7 +299,7 @@ function Row({
           setJustCopied(0);
         }, 1000);
       });
-  }, [uuid]);
+  }, [uuid, formatCPF]);
 
   React.useEffect(() => {
     if (justFaved && justFaved !== uuid) {
@@ -315,16 +321,31 @@ function Row({
     };
   }, [mouseDown, handleCopy]);
 
-  const highlight = searchDisplayed && search && uuid.includes(search);
-  let UUIDToDisplay = uuid;
+  const formatted = formatCPF(uuid);
+  const searchDigits = (search || "").replace(/\D/g, "");
+  const raw = formatted.replace(/\D/g, "");
+  const highlight = searchDisplayed && searchDigits && raw.includes(searchDigits);
+  let UUIDToDisplay = formatted;
   if (highlight) {
-    const start = uuid.indexOf(search);
-    const end = start + search.length;
+    const start = raw.indexOf(searchDigits);
+    const end = start + searchDigits.length;
+    // map raw digit indices to formatted indices
+    const map = [];
+    let rawIdx = 0;
+    for (let i = 0; i < formatted.length; i++) {
+      const ch = formatted[i];
+      if (/\d/.test(ch)) {
+        map[rawIdx] = i;
+        rawIdx++;
+      }
+    }
+    const fStart = map[start] ?? 0;
+    const fEnd = (map[end - 1] ?? formatted.length - 1) + 1;
     UUIDToDisplay = (
       <>
-        {uuid.slice(0, start)}
-        <Highlight>{uuid.slice(start, end)}</Highlight>
-        {uuid.slice(end)}
+        {formatted.slice(0, fStart)}
+        <Highlight>{formatted.slice(fStart, fEnd)}</Highlight>
+        {formatted.slice(fEnd)}
       </>
     );
   }
@@ -367,7 +388,7 @@ function Row({
           style={{ height: "100%", aspectRatio: 1 }}
         />
       </FavoriteButton>
-      {justCopied !== 0 && <CopiedText key={justCopied}>copied!</CopiedText>}
+      {justCopied !== 0 && <CopiedText key={justCopied}>copiado!</CopiedText>}
     </RowWrapper>
   );
 }

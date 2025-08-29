@@ -6,9 +6,9 @@ import {
 } from "../../../lib/constants";
 import { Code, Twitter, Bsky, Help } from "../Icons/Icons";
 const SUBHEADS = [
-  "In case you forgot one",
-  "Scroll till you find a good one",
-  "Well, only the V4 ones",
+  "Caso você tenha esquecido um",
+  "Role até encontrar um bom",
+  "Até dos mortos",
 ];
 
 const Wrapper = styled.header`
@@ -128,28 +128,20 @@ function Header() {
     <Wrapper>
       <TitleSubhead>
         <TitleLink href="/">
-          <Title>Every UUID Dot Com</Title>
+          <Title>Todos os CPFs</Title>
         </TitleLink>
         <Subhead>{subhead}</Subhead>
       </TitleSubhead>
       <SelfPromotion>
         <Socials>
-          <SocialLink href="https://eieio.games/blog/writing-down-every-uuid">
-            <Help />
-          </SocialLink>
-          <SocialLink href="https://github.com/nolenroyalty/every-uuid">
+          <SocialLink href="https://github.com/caioluders/every-cpf">
             <Code />
           </SocialLink>
-          <SocialLink href="https://twitter.com/itseieio">
+          <SocialLink href="https://twitter.com/caioluders">
             <Twitter />
           </SocialLink>
-          <SocialLink href="https://bsky.app/profile/itseieio.bsky.social">
-            <Bsky />
-          </SocialLink>
         </Socials>
-        <p>
-          A website by <Link href="https://eieio.games">eieio</Link>
-        </p>
+        <p>Um site por <Link href="https://lude.rs">caioluders</Link></p>
       </SelfPromotion>
     </Wrapper>
   );
