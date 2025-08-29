@@ -268,6 +268,13 @@ const Highlight = styled.span`
   background-color: var(--yellow-300);
 `;
 
+const StateTag = styled.span`
+  margin-left: 0.5rem;
+  color: var(--neutral-700);
+  font-size: var(--text-size);
+  opacity: 0.9;
+`;
+
 function Row({
   index,
   uuid,
@@ -363,6 +370,29 @@ function Row({
     );
   }
 
+  const REGION_BY_9TH = React.useMemo(
+    () => ({
+      "0": "RS",
+      "1": "DF, GO, MT, MS, TO",
+      "2": "AC, AM, AP, PA, RO, RR",
+      "3": "CE, MA, PI",
+      "4": "AL, PB, PE, RN",
+      "5": "BA, SE",
+      "6": "MG",
+      "7": "ES, RJ",
+      "8": "SP",
+      "9": "PR, SC",
+    }),
+    []
+  );
+  const region = raw.length === 11 ? REGION_BY_9TH[raw[8]] : null;
+  const UUIDWithState = (
+    <>
+      {region ? <StateTag>{region + " ".repeat(23 - region.length)}</StateTag> : null} {/* add padding to the right so the uuid is aligned */}
+      {UUIDToDisplay}
+    </>
+  );
+
   return (
     <RowWrapper
       // this doesn't work well with touch-scrolling (you end up copying on accident)
@@ -382,7 +412,7 @@ function Row({
         <Index>{indexString}</Index>
       </IndexWithPadding>
       <Colon />
-      <UUID>{UUIDToDisplay}</UUID>
+      <UUID>{UUIDWithState}</UUID>
       <CopyButton onClick={handleCopy} $rowMouseDown={mouseDown}>
         <ClipboardCopy style={{ height: "100%", aspectRatio: 1 }} />
       </CopyButton>

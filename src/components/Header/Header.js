@@ -141,7 +141,7 @@ function Header() {
             <Twitter />
           </SocialLink>
         </Socials>
-        <p>Um site por <Link href="https://lude.rs">caioluders</Link></p>
+        <p>Fork do <Link href="https://everyuuid.com">everyuuid</Link> do <Link href="https://eieio.games">eieio</Link> por <Link href="https://lude.rs">caioluders</Link></p>
       </SelfPromotion>
     </Wrapper>
   );
