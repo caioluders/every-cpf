@@ -11,6 +11,7 @@ import {
   WIDTH_TO_SHOW_DOUBLE_HEIGHT,
 } from "../../../lib/constants";
 import { ClipboardCopy, Star } from "../Icons";
+import { indexToUUID } from "../../../lib/uuidTools";
 
 const BaseButton = styled(UnstyledButton)`
   height: 100%;
@@ -110,6 +111,18 @@ const Wrapper = styled.div`
 const List = styled.div`
   height: 100%;
   padding-bottom: 2rem;
+`;
+
+const TopControls = styled.div`
+  position: sticky;
+  top: 0;
+  background: var(--slate-100);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  z-index: 5;
 `;
 
 const RowWrapper = styled.div`
@@ -324,7 +337,7 @@ function Row({
   const formatted = formatCPF(uuid);
   const searchDigits = (search || "").replace(/\D/g, "");
   const raw = formatted.replace(/\D/g, "");
-  const highlight = searchDisplayed && searchDigits && raw.includes(searchDigits);
+  const highlight = !!searchDigits && raw.includes(searchDigits);
   let UUIDToDisplay = formatted;
   if (highlight) {
     const start = raw.indexOf(searchDigits);
@@ -406,8 +419,11 @@ function UUIDDisplay({
   search,
   searchDisplayed,
   displayedUUIDs,
+  randomized,
+  setRandomized,
 }) {
   const ref = React.useRef(null);
+  // Mapping is randomized in parent via props; no side effects here
 
   const movePosition = React.useCallback(
     (delta) => {
@@ -625,11 +641,22 @@ function UUIDDisplay({
 
   return (
     <Wrapper ref={ref} onKeyDown={handleKeyDown} tabIndex={0}>
-      <List>
+      <List key={randomized ? "rand" : "seq"}>
+        <TopControls>
+          <label style={{ color: "black", fontFamily: "monospace", fontSize: "0.875rem" }}>
+            <input
+              type="checkbox"
+              checked={randomized}
+              onChange={(e) => setRandomized(e.target.checked)}
+              style={{ marginRight: "0.25rem" }}
+            />
+            aleatório
+          </label>
+        </TopControls>
         {displayedUUIDs.map(({ index, uuid }, i) => {
           return (
             <Row
-              key={i}
+              key={uuid}
               index={index}
               uuid={uuid}
               isFaved={favedUUIDs[uuid]}

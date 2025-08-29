@@ -143,7 +143,7 @@ function SearchWidget({
   }, []);
   const shiftIsHeldDown = useShiftIsHeldDown();
 
-  const { searchUUID, currentUUID, nextUUID, previousUUID } = useUUIDSearch({
+  const { searchUUID, currentUUID, nextUUID, previousUUID, isSearching, notFound } = useUUIDSearch({
     displayedUUIDs,
     virtualPosition,
   });
@@ -160,6 +160,7 @@ function SearchWidget({
     if (p4) out += `-${p4}`;
     return out;
   }, []);
+
   const index = React.useMemo(() => {
     if (currentUUID) {
       const index = uuidToIndex(currentUUID);
@@ -239,15 +240,38 @@ function SearchWidget({
               const onlyDigits = e.target.value.replace(/\D/g, "");
               setSearch(onlyDigits);
               searchUUID(onlyDigits);
+              setSearchDisplayed(true);
             }}
           />
         </Form>
         <Line />
-        <Button onClick={() => previousUUID()}>
+        {isSearching && (
+          <div style={{ fontFamily: "monospace", fontSize: "0.875rem", color: "black" }}>
+            buscando...
+          </div>
+        )}
+        {notFound && !isSearching && (
+          <div style={{ fontFamily: "monospace", fontSize: "0.875rem", color: "black" }}>
+            nenhum resultado
+          </div>
+        )}
+        <Button onClick={() => {
+          setSearchDisplayed(true);
+          const res = previousUUID();
+          if (!search && res) {
+            setSearch(res.replace(/\D/g, ""));
+          }
+        }}>
           <ChevronUp style={{ height: "100%", width: "100%" }} />
         </Button>
-        <Button onClick={() => nextUUID()}>
-          <ChevronDown style={{ height: "100%", width: "100%" }} />
+        <Button onClick={() => {
+          setSearchDisplayed(true);
+          const res = nextUUID();
+          if (!search && res) {
+            setSearch(res.replace(/\D/g, ""));
+          }
+        }}>
+          <ChevronDown style={{ height: "100%", width: "100%", opacity: isSearching ? 0.4 : 1 }} />
         </Button>
         <Button onClick={() => setSearchDisplayed(false)}>
           <X style={{ height: "100%", width: "100%" }} />

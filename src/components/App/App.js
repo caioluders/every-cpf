@@ -43,7 +43,10 @@ function App() {
   const [search, setSearch] = React.useState("");
   const [searchDisplayed, setSearchDisplayed] = React.useState(false);
   const [showFavorites, _setShowFavorites] = React.useState(false);
+  const [randomized, setRandomized] = React.useState(true);
   const animationRef = React.useRef(null);
+  // no side-effect toggles; pass randomized down to mapping functions
+
 
   const [favedUUIDs, setFavedUUIDs] = React.useState(
     localStorage.getItem("favedUUIDs")
@@ -172,21 +175,21 @@ function App() {
       if (index > MAX_UUID) {
         return null;
       }
-      const uuid = indexToUUID(index);
+      const uuid = indexToUUID(index, randomized);
       if (!uuid) {
         console.error("no uuid", index);
         return null;
       }
       return { index, uuid };
     });
-  }, [virtualPosition, itemsToShow, showFavorites, favedUUIDs, MAX_POSITION]);
+  }, [virtualPosition, itemsToShow, showFavorites, favedUUIDs, MAX_POSITION, randomized]);
 
   const firstUuid = React.useMemo(() => {
     if (showFavorites) {
       return Object.keys(favedUUIDs)[0];
     }
-    return indexToUUID(virtualPosition);
-  }, [virtualPosition, showFavorites, favedUUIDs]);
+    return indexToUUID(virtualPosition, randomized);
+  }, [virtualPosition, showFavorites, favedUUIDs, randomized]);
 
   const [browserHash, setBrowserHash] = React.useState(null);
 
@@ -244,6 +247,8 @@ function App() {
               search={search}
               searchDisplayed={searchDisplayed}
               displayedUUIDs={displayedUUIDs}
+              randomized={randomized}
+              setRandomized={setRandomized}
             />
           </Content>
         </HeaderAndContent>

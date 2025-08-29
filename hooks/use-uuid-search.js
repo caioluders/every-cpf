@@ -2,15 +2,18 @@ import React from "react";
 import { uuidToIndex, indexToUUID } from "../lib/uuidTools";
 import { MAX_UUID } from "../lib/constants";
 
-const SEARCH_LOOKBACK = 50;
-const SEARCH_LOOKAHEAD = 25;
-const RANDOM_SEARCH_ITERATIONS = 100;
+const SEARCH_LOOKBACK = 200;
+const SEARCH_LOOKAHEAD = 120;
+const RANDOM_SEARCH_ITERATIONS = 600;
 
 export function useUUIDSearch({ virtualPosition, displayedUUIDs }) {
   const [search, setSearch] = React.useState(null);
   const [uuid, setUUID] = React.useState(null);
   // Stack of complete states we've seen
   const [nextStates, setNextStates] = React.useState([]);
+  const [isSearching, setIsSearching] = React.useState(false);
+  const [notFound, setNotFound] = React.useState(false);
+  const generationRef = React.useRef(0);
 
   const previousUUIDs = React.useMemo(() => {
     let hasComputed = false;
@@ -79,7 +82,7 @@ export function useUUIDSearch({ virtualPosition, displayedUUIDs }) {
         for (let i = 0; i < next.length; i++) {
           const uuid = next[i].uuid;
           if (uuid.includes(digits)) {
-            return { uuid, index: nextUUIDs[i].index };
+            return { uuid, index: next[i].index };
           }
         }
       } else {
@@ -100,8 +103,10 @@ export function useUUIDSearch({ virtualPosition, displayedUUIDs }) {
     ({ input, wantHigher }) => {
       const digits = input.replace(/\D/g, "");
       let best = null;
-      let compareIndex = virtualPosition;
-      for (let i = 0; i < RANDOM_SEARCH_ITERATIONS; i++) {
+      let compareIndex =
+        nextStates.length > 0 ? nextStates[nextStates.length - 1].index : virtualPosition;
+      let iterations = RANDOM_SEARCH_ITERATIONS;
+      for (let i = 0; i < iterations; i++) {
         const randomIndex = BigInt(
           Math.floor(Math.random() * Number(MAX_UUID))
         );
@@ -127,6 +132,22 @@ export function useUUIDSearch({ virtualPosition, displayedUUIDs }) {
         }
       }
       if (best) return best;
+      // second pass with more iterations if nothing found
+      iterations = RANDOM_SEARCH_ITERATIONS * 3;
+      for (let i = 0; i < iterations; i++) {
+        const randomIndex = BigInt(
+          Math.floor(Math.random() * Number(MAX_UUID))
+        );
+        const uuid = indexToUUID(randomIndex);
+        if (!uuid || !uuid.includes(digits)) continue;
+        const index = randomIndex;
+        const satisfiesConstraint = wantHigher
+          ? index > compareIndex
+          : index < compareIndex;
+        if (satisfiesConstraint) {
+          return { uuid, index };
+        }
+      }
       return null;
     },
     [nextStates, uuid, virtualPosition]
@@ -139,6 +160,9 @@ export function useUUIDSearch({ virtualPosition, displayedUUIDs }) {
 
       // Clear next states stack when search changes
       setNextStates([]);
+      setNotFound(false);
+      setIsSearching(true);
+      const myGen = ++generationRef.current;
 
       // If full CPF (11 digits), jump directly
       if (newSearch.length === 11) {
@@ -162,19 +186,53 @@ export function useUUIDSearch({ virtualPosition, displayedUUIDs }) {
         return searchRandomly({ input: newSearch, wantHigher: true });
       };
 
-      const result = inner();
-      if (result) {
+      const immediate = inner();
+      if (immediate) {
+        setIsSearching(false);
         setSearch(newSearch);
-        setUUID(result.uuid);
-        setNextStates((prev) => [...prev, result]);
+        setUUID(immediate.uuid);
+        setNextStates((prev) => [...prev, immediate]);
+        return immediate.uuid;
       }
-      return result?.uuid ?? null;
+
+      // Progressive async search until found or input changes
+      (async () => {
+        // exact 11 digits invalid => stop early
+        if (newSearch.length === 11) {
+          const idx = uuidToIndex(newSearch);
+          if (idx === null) {
+            if (generationRef.current === myGen) {
+              setIsSearching(false);
+              setNotFound(true);
+            }
+            return;
+          }
+        }
+        while (generationRef.current === myGen) {
+          const result = searchRandomly({ input: newSearch, wantHigher: true });
+          if (result) {
+            if (generationRef.current !== myGen) return;
+            setIsSearching(false);
+            setSearch(newSearch);
+            setUUID(result.uuid);
+            setNextStates((prev) => [...prev, result]);
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 0));
+        }
+        // cancelled by new search
+        setIsSearching(false);
+      })();
+      return null;
     },
     [searchAround, searchRandomly]
   );
 
   const nextUUID = React.useCallback(() => {
     if (!uuid || !search) return null;
+    setNotFound(false);
+    setIsSearching(true);
+    const myGen = ++generationRef.current;
     const inner = () => {
       const around = searchAround({
         input: search,
@@ -184,17 +242,35 @@ export function useUUIDSearch({ virtualPosition, displayedUUIDs }) {
       if (around) return around;
       return searchRandomly({ input: search, wantHigher: true });
     };
-    const result = inner();
-    if (result) {
-      setUUID(result.uuid);
-      setNextStates((prev) => [...prev, result]);
-      return result.uuid;
+    const immediate = inner();
+    if (immediate) {
+      setIsSearching(false);
+      setUUID(immediate.uuid);
+      setNextStates((prev) => [...prev, immediate]);
+      return immediate.uuid;
     }
+    (async () => {
+      while (generationRef.current === myGen) {
+        const result = searchRandomly({ input: search, wantHigher: true });
+        if (result) {
+          if (generationRef.current !== myGen) return;
+          setIsSearching(false);
+          setUUID(result.uuid);
+          setNextStates((prev) => [...prev, result]);
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 0));
+      }
+      setIsSearching(false);
+    })();
     return null;
   }, [uuid, search, searchAround, searchRandomly]);
 
   const previousUUID = React.useCallback(() => {
     if (!uuid || !search) return null;
+    setNotFound(false);
+    setIsSearching(true);
+    const myGen = ++generationRef.current;
 
     if (nextStates.length > 1) {
       setNextStates((prev) => prev.slice(0, -1));
@@ -212,11 +288,25 @@ export function useUUIDSearch({ virtualPosition, displayedUUIDs }) {
       if (around) return around;
       return searchRandomly({ input: search, wantHigher: false });
     };
-    const result = inner();
-    if (result) {
-      setUUID(result.uuid);
-      return result.uuid;
+    const immediate = inner();
+    if (immediate) {
+      setIsSearching(false);
+      setUUID(immediate.uuid);
+      return immediate.uuid;
     }
+    (async () => {
+      while (generationRef.current === myGen) {
+        const result = searchRandomly({ input: search, wantHigher: false });
+        if (result) {
+          if (generationRef.current !== myGen) return;
+          setIsSearching(false);
+          setUUID(result.uuid);
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 0));
+      }
+      setIsSearching(false);
+    })();
     return null;
   }, [uuid, search, nextStates, searchAround, searchRandomly]);
 
@@ -225,6 +315,8 @@ export function useUUIDSearch({ virtualPosition, displayedUUIDs }) {
     nextUUID,
     previousUUID,
     currentUUID: uuid,
+    isSearching,
+    notFound,
   };
 }
 
