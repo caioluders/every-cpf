@@ -225,6 +225,7 @@ function App() {
         setSearchDisplayed={setSearchDisplayed}
         displayedUUIDs={displayedUUIDs}
         MAX_POSITION={MAX_POSITION}
+        randomized={randomized}
       />
       <FavoritesWidget
         setShowFavorites={setShowFavorites}

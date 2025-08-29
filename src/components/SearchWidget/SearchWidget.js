@@ -135,6 +135,7 @@ function SearchWidget({
   displayedUUIDs,
   virtualPosition,
   MAX_POSITION,
+  randomized,
 }) {
   const inputRef = React.useRef(null);
   const cmdKey = React.useMemo(() => {
@@ -239,7 +240,15 @@ function SearchWidget({
             onChange={(e) => {
               const onlyDigits = e.target.value.replace(/\D/g, "");
               setSearch(onlyDigits);
-              searchUUID(onlyDigits);
+              // If full CPF and sequential order, jump directly using exact mapping
+              if (onlyDigits.length === 11 && randomized === false) {
+                const idx = uuidToIndex(onlyDigits, false);
+                if (idx !== null) {
+                  setVirtualPosition(idx);
+                }
+              } else {
+                searchUUID(onlyDigits);
+              }
               setSearchDisplayed(true);
             }}
           />
